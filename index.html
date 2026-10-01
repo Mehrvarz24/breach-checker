@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BreachChecker — Email, Username &amp; Phone Leak Lookup</title>
+<style>
+:root{--bg:#121212;--panel:#1a1a1a;--panel2:#222220;--cream:#f0e9d8;--muted:#9a937f;--gold:#c9a962;--gold2:#e6cf9a;--red:#d96c5f;--green:#8fbf7f;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--cream);font-family:ui-sans-serif,system-ui,'Segoe UI',Arial,sans-serif;min-height:100vh;padding:2rem 1rem}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-weight:600;font-size:1.7rem;letter-spacing:.5px;text-align:center;color:var(--gold)}
+h1 span{color:var(--cream)}
+.sub{text-align:center;color:var(--muted);margin:.4rem 0 1.5rem;font-size:.95rem}
+.card{background:var(--panel);border:1px solid #2e2c26;border-radius:14px;padding:1.4rem 1.6rem;margin-bottom:1.2rem;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.card h2{font-size:1.05rem;color:var(--gold);font-weight:600;margin-bottom:1rem;letter-spacing:.4px;text-transform:uppercase}
+label{display:block;color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.6px;margin:.8rem 0 .3rem}
+input,select{width:100%;background:var(--panel2);border:1px solid #3a362c;border-radius:10px;color:var(--cream);font-size:1rem;padding:.75rem .9rem}
+select{width:auto;min-width:130px}
+input:focus,select:focus{outline:1px solid var(--gold);border-color:var(--gold)}
+.row{display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap}
+.row>div:first-child{flex:1;min-width:220px}
+.btn{display:inline-block;background:linear-gradient(135deg,var(--gold),#a68b4b);color:#121212;border:none;border-radius:10px;padding:.7rem 1.8rem;font-weight:700;font-size:.95rem;cursor:pointer;letter-spacing:.3px;margin-top:1rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+#status{color:var(--muted);font-size:.85rem;margin-top:.7rem;min-height:1.2em}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--gold);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:.4rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.err{background:rgba(217,108,95,.12);border:1px solid #5a3a34;color:var(--red);border-radius:10px;padding:.8rem 1rem;margin-top:.8rem;display:none}
+.risk{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
+.risk .score{font-size:3rem;font-weight:700}
+.risk .lbl{font-size:.8rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.bar{flex:1;min-width:200px;height:10px;background:#2a2822;border-radius:6px;overflow:hidden}
+.bar>div{height:100%;border-radius:6px;transition:width .6s}
+.stealer{background:rgba(217,108,95,.12);border:1px solid #6a3a34;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;display:none}
+.stealer b{color:var(--red)}
+.srcs{color:var(--muted);font-size:.8rem;margin-bottom:.8rem}
+.srcs span{display:inline-block;background:rgba(201,169,98,.12);border:1px solid #3a362c;border-radius:20px;padding:.15rem .7rem;margin:0 .3rem .3rem 0;font-size:.72rem;letter-spacing:.4px}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;text-align:left;padding:.55rem .6rem;border-bottom:1px solid #2e2c26}
+td{padding:.6rem;border-bottom:1px solid #26241f;word-break:break-word;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:.7rem;padding:.15rem .55rem;border-radius:20px;background:rgba(201,169,98,.15);color:var(--gold);margin:0 .25rem .25rem 0;font-weight:600}
+.via{color:var(--muted);font-size:.68rem;margin-left:.4rem}
+.check{display:flex;gap:.6rem;align-items:flex-start;padding:.45rem 0;color:var(--cream)}
+.check::before{content:"\2610";color:var(--gold);font-size:1.05rem;line-height:1.3}
+.mono{font-family:ui-monospace,'Cascadia Code',Consolas,monospace;font-size:.82rem}
+footer{text-align:center;color:var(--muted);font-size:.75rem;margin-top:2rem}
+footer b{color:var(--gold)}
+.hidden{display:none}
+p.ok{color:var(--green);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Breach<span>Checker</span></h1>
+  <p class="sub">Check if your email, username, or phone number has been exposed in known data breaches or stealer logs.<br>
+  Sources: XposedOrNot · LeakCheck · Hudson Rock — free &amp; keyless, queried server-side. Nothing is stored beyond a 1-hour cache.</p>
+
+  <div class="card">
+    <h2>Lookup</h2>
+    <div class="row">
+      <div>
+        <label for="query">Email, username, or phone (international digits, no +)</label>
+        <input id="query" type="text" placeholder="you@example.com · john_doe · 989120000000" autocomplete="off" spellcheck="false">
+      </div>
+      <div>
+        <label for="type">Type</label>
+        <select id="type">
+          <option value="auto" selected>Auto-detect</option>
+          <option value="email">Email</option>
+          <option value="username">Username</option>
+          <option value="phone">Phone</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" id="go" onclick="check()">Check breaches</button>
+    <div id="status"></div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="card">
+      <h2>Risk score</h2>
+      <div class="risk">
+        <div><div class="score" id="score">–</div><div class="lbl" id="scorelbl">/ 100</div></div>
+        <div class="bar"><div id="bar"></div></div>
+      </div>
+    </div>
+
+    <div class="stealer" id="stealer">
+      <b>⚠ Stealer infection detected!</b>
+      <div id="stealerdetail" style="margin-top:.5rem;font-size:.88rem;color:var(--cream)"></div>
+    </div>
+    <div id="stealerclean" style="display:none;background:rgba(143,191,127,.12);border:1px solid #3a5a34;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;color:var(--green);font-size:.9rem">
+      ✓ No stealer infection found — your credentials were not caught in infostealer logs.
+    </div>
+
+    <div class="card">
+      <h2>Known breaches (<span id="bcount">0</span>)</h2>
+      <div class="srcs">Sources checked: <span id="srcs"></span></div>
+      <div id="breaches"></div>
+    </div>
+
+    <div class="card">
+      <h2>What to do now</h2>
+      <div class="check">Change the password on the affected account immediately — and anywhere you reused it.</div>
+      <div class="check">Enable two-factor authentication (2FA) everywhere; prefer an authenticator app over SMS.</div>
+      <div class="check">Use a unique, strong password for every account (a password manager helps).</div>
+      <div class="check">If passwords or session cookies were in stealer logs, log out all sessions and re-secure recovery email/phone.</div>
+      <div class="check">Watch for phishing: attackers know your leaked data and will pose as trusted services.</div>
+      <div class="check">Check your accounts regularly — new breaches surface over time.</div>
+    </div>
+  </div>
+
+  <footer>Breach<b>Checker</b> · data via XposedOrNot, LeakCheck &amp; Hudson Rock Cavalier · no accounts, no tracking</footer>
+</div>
+<script>
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const st=document.getElementById('status'),err=document.getElementById('err');
+function check(){
+  const query=document.getElementById('query').value.trim();
+  const type=document.getElementById('type').value;
+  err.style.display='none';document.getElementById('results').classList.add('hidden');
+  if(!query){err.textContent='Enter an email, username, or phone number.';err.style.display='block';return;}
+  st.innerHTML='<span class="spinner"></span>Checking breaches &amp; stealer logs… this can take up to ~15 seconds';
+  document.getElementById('go').disabled=true;
+  fetch('/api/check?query='+encodeURIComponent(query)+'&type='+encodeURIComponent(type))
+    .then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(({ok,data})=>{
+    document.getElementById('go').disabled=false;st.textContent='';
+    if(!ok){err.textContent=data.error||('Error '+JSON.stringify(data).slice(0,200));err.style.display='block';return;}
+    render(data);
+  }).catch(e=>{document.getElementById('go').disabled=false;st.textContent='';
+    err.textContent='Network error: '+e;err.style.display='block';});
+}
+function render(d){
+  const r=d.risk||0, lbl=d.risk_label||'';
+  const col=r>=75?'var(--red)':r>=50?'#e0955a':r>=25?'var(--gold)':'var(--green)';
+  document.getElementById('score').textContent=r;
+  document.getElementById('score').style.color=col;
+  document.getElementById('scorelbl').textContent=lbl+' · / 100';
+  const bar=document.getElementById('bar');bar.style.width=r+'%';bar.style.background=col;
+  // stealer warning / clean notice
+  const sbox=document.getElementById('stealer');
+  sbox.style.display=d.infected?'block':'none';
+  document.getElementById('stealerdetail').innerHTML=(d.stealer_msgs||[]).map(esc).join('<br>');
+  const cleanBox=document.getElementById('stealerclean');
+  if(cleanBox)cleanBox.style.display=(!d.infected&&(d.sources_checked||[]).some(s=>s.toLowerCase().includes('hudson')))?'block':'none';
+  // sources checked
+  document.getElementById('srcs').innerHTML=(d.sources_checked||[]).map(s=>'<span>'+esc(s)+'</span>').join('')
+    +(d.type?' <span style="opacity:.7">type: '+esc(d.type)+'</span>':'');
+  // breaches table
+  const bs=(d.breaches||[]).slice(0,100);
+  document.getElementById('bcount').textContent=d.breach_count||bs.length;
+  let html='';
+  if(bs.length){
+    html='<table><tr><th>Breach</th><th>Date</th><th>Data / source</th></tr>';
+    bs.forEach(b=>{
+      const dc=(b.data_classes||[]).slice(0,6).map(c=>'<span class="badge">'+esc(c)+'</span>').join('');
+      const extra=dc||'<span style="color:var(--muted)">details unavailable</span>';
+      html+='<tr><td><b>'+esc(b.name)+'</b><span class="via">'+esc(b.via||'')+'</span></td><td>'+esc(b.date||'—')+'</td><td>'+extra+'</td></tr>';
+    });
+    html+='</table>';
+    if((d.breach_count||0)>bs.length)html+='<p style="color:var(--muted);font-size:.8rem;margin-top:.5rem">Showing first '+bs.length+' of '+d.breach_count+'.</p>';
+  }else{
+    let msg='<p class="ok">✓ No known breaches found.</p>';
+    const se=d.source_errors||{};
+    if(Object.keys(se).length)msg+='<p style="color:var(--muted);font-size:.82rem;margin-top:.5rem">'+Object.entries(se).map(([k,v])=>esc(k)+': '+esc(v)).join(' · ')+'</p>';
+    html=msg;
+  }
+  document.getElementById('breaches').innerHTML=html;
+  document.getElementById('results').classList.remove('hidden');
+}
+document.getElementById('query').addEventListener('keydown',e=>{if(e.key==='Enter')check()});
+</script>
+</body>
+</html>
